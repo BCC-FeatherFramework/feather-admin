@@ -163,6 +163,12 @@ function FeatherAdmin.CanUse(src, action)
     return AuthorityEntitled(src, action)
 end
 
+-- Authority entitlement only, ignoring Config.identity disabled actions. For server
+-- commands that replace a disabled menu screen (money_commands.lua).
+function FeatherAdmin.IsEntitled(src, action)
+    return AuthorityEntitled(src, action)
+end
+
 function FeatherAdmin.GetPermissions(src)
     local permissions = {}
     local identity = FeatherAdmin.Identity.Resolve(src)

@@ -39,6 +39,11 @@ Config.servicePolicy = {
         -- (bank.migration.import, bank.reserve.funding). Banks never destroy currency.
         ['bcc-banks'] = {
             ['economy.currency.issue']=true
+        },
+        -- Staff /givemoney and /takemoney (money_commands.lua), owner capability checked first.
+        ['feather-admin'] = {
+            ['economy.currency.issue']=true,
+            ['economy.currency.destroy']=true
         }
     },
     ['feather-assets'] = {

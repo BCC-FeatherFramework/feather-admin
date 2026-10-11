@@ -24,6 +24,16 @@ Config = {
     },
     -----------------------------------------------------
 
+    -- Staff money commands (server/services/money_commands.lua). Players need the
+    -- owner capability economy.<currency>.add / .remove; the console can always use them.
+    money = {
+        enabled = true,
+        giveCommand = 'givemoney', -- /givemoney <server id> <amount> [dollars|gold]
+        takeCommand = 'takemoney', -- /takemoney <server id> <amount> [dollars|gold]
+        maxAmount = 100000         -- Largest amount per command, in whole units.
+    },
+    -----------------------------------------------------
+
     -- Admin action logs are always written to the server console.
     -----------------------------------------------------
 
