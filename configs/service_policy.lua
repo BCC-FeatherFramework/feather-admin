@@ -53,6 +53,13 @@ Config.servicePolicy = {
             ['assets.ownership.transfer']=true
         }
     },
+    ['feather-property'] = {
+        -- Houses and hotel rooms: registration, owners and tenants.
+        ['bcc-housing'] = {
+            ['property.property.manage']=true,
+            ['property.interest.manage']=true
+        }
+    },
     ['feather-jobs'] = {
         -- Shared job types, grades, and member assignments/duty.
         ['bcc-society'] = {
