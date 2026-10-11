@@ -2,8 +2,10 @@ Config = {
 
     -- Admin permissions use the active Character's assignment from feather-authority.
     identity = {
-        -- Economy remains hidden until its dedicated provider is available.
-        disabledActionPrefixes = { 'economy.' },
+        -- Player Economy screens remain hidden until their dedicated provider is
+        -- available. Only those prefixes are disabled, so service decisions such as
+        -- economy.currency.issue can still be granted in configs/service_policy.lua.
+        disabledActionPrefixes = { 'economy.dollars.', 'economy.gold.', 'economy.tokens.', 'economy.xp.' },
         disabledActions = { ['character.restore_model'] = true }
     },
 
