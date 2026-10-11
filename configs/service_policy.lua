@@ -40,6 +40,10 @@ Config.servicePolicy = {
         ['bcc-banks'] = {
             ['economy.currency.issue']=true
         },
+        -- Sale back to the housing agent and furniture sell-back create money.
+        ['bcc-housing'] = {
+            ['economy.currency.issue']=true
+        },
         -- Staff /givemoney and /takemoney (money_commands.lua), owner capability checked first.
         ['feather-admin'] = {
             ['economy.currency.issue']=true,
