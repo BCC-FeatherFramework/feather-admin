@@ -57,6 +57,14 @@ Config.servicePolicy = {
             ['assets.ownership.transfer']=true
         }
     },
+    ['feather-contracts'] = {
+        -- Monthly property tax and rent obligations, cancelled when staff delete a house.
+        ['bcc-housing'] = {
+            ['contracts.obligation.issue']=true,
+            ['contracts.obligation.cancel']=true,
+            ['contracts.obligation.default']=true
+        }
+    },
     ['feather-property'] = {
         -- Houses and hotel rooms: registration, owners and tenants.
         ['bcc-housing'] = {
