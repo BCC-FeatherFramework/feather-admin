@@ -44,6 +44,10 @@ Config.servicePolicy = {
         ['bcc-housing'] = {
             ['economy.currency.issue']=true
         },
+        -- Horse sales to the stable and to trainers (feather-economy IssueReasons).
+        ['bcc-stables'] = {
+            ['economy.currency.issue']=true
+        },
         -- Staff /givemoney and /takemoney (money_commands.lua), owner capability checked first.
         ['feather-admin'] = {
             ['economy.currency.issue']=true,
