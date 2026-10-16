@@ -1,7 +1,10 @@
 -- Staff money commands: /givemoney and /takemoney.
 --
---   givemoney <server id> <amount> [dollars|gold]   issue into the character's wallet
---   takemoney <server id> <amount> [dollars|gold]   destroy from the character's wallet
+--   givemoney <server id|character UUID> <amount> [dollars|gold]   issue into the character's wallet
+--   takemoney <server id|character UUID> <amount> [dollars|gold]   destroy from the character's wallet
+--
+-- A character UUID works while the character is offline (corrections). The journal
+-- records the staff member's character as the actor (none for the server console).
 --
 -- Amounts are whole currency units with up to two decimals (12.50). Players need the
 -- Admin owner capability economy.<currency>.add / .remove; the server console may
@@ -30,16 +33,38 @@ local function Wallet(characterId, currency)
     return nil
 end
 
+-- The target: a connected player's server id, or a character UUID (online or not).
+local function Target(argument)
+    local uuid = type(argument) == 'string' and argument:match(
+        '^%x%x%x%x%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%x%x%x%x%x%x%x%x$')
+    if uuid then
+        local provider = exports['feather-core']:GetProvider('character-profile', nil, 1)
+        if type(provider) ~= 'table' or provider.ok ~= true then return nil, 'The character provider is unavailable.' end
+        local profile = provider.value.implementation.GetProfile(uuid:lower())
+        if type(profile) ~= 'table' or profile.ok ~= true or type(profile.value) ~= 'table' then
+            return nil, 'No character has that UUID.'
+        end
+        local name = ('%s %s'):format(profile.value.firstName or '', profile.value.lastName or ''):gsub('^%s+', ''):gsub('%s+$', '')
+        return { characterId = uuid:lower(), name = name ~= '' and name or uuid:lower() }
+    end
+    local source = FeatherAdmin.ValidTarget(argument)
+    if not source then return nil end
+    local session = exports['feather-core']:GetSessionContext(source)
+    if type(session) ~= 'table' or not session.ok then
+        return nil, ('Player %d has no active character.'):format(source)
+    end
+    return { characterId = session.value.characterId, name = GetPlayerName(source), source = source }
+end
+
 local function Format(minor, currency)
     return ('%d.%02d %s'):format(minor // 100, minor % 100, currency)
 end
 
 local function Run(src, args, operation)
     local command = operation == 'issue' and settings.giveCommand or settings.takeCommand
-    local target, currency = FeatherAdmin.ValidTarget(args[1]), (args[3] or 'dollars'):lower()
-    local amount = tonumber(args[2])
-    if not target or not CURRENCIES[currency] or not amount or args[4] ~= nil then
-        return Reply(src, ('Usage: /%s <server id> <amount> [dollars|gold]'):format(command))
+    local currency, amount = (args[3] or 'dollars'):lower(), tonumber(args[2])
+    if args[1] == nil or not CURRENCIES[currency] or not amount or args[4] ~= nil then
+        return Reply(src, ('Usage: /%s <server id|character UUID> <amount> [dollars|gold]'):format(command))
     end
     local minor = math.floor(amount * 100 + 0.5)
     local maximum = math.floor((tonumber(settings.maxAmount) or 100000) * 100)
@@ -50,15 +75,15 @@ local function Run(src, args, operation)
     local action = ('economy.%s.%s'):format(currency, operation == 'issue' and 'add' or 'remove')
     if src ~= 0 and not FeatherAdmin.IsEntitled(src, action) then return FeatherAdmin.DenyAction(src) end
 
-    local session = exports['feather-core']:GetSessionContext(target)
-    if type(session) ~= 'table' or not session.ok then
-        return Reply(src, ('Player %d has no active character.'):format(target))
+    local target, problem = Target(args[1])
+    if not target then
+        return Reply(src, problem or ('Usage: /%s <server id|character UUID> <amount> [dollars|gold]'):format(command))
     end
-    local characterId = session.value.characterId
+    local characterId = target.characterId
     local wallet = Wallet(characterId, currency)
     if not wallet then return Reply(src, 'Economy is unavailable or the wallet could not be opened.') end
     if operation == 'destroy' and (tonumber(wallet.balance) or 0) < minor then
-        return Reply(src, ('Player %d only has %s.'):format(target, Format(tonumber(wallet.balance) or 0, currency)))
+        return Reply(src, ('%s only has %s.'):format(target.name, Format(tonumber(wallet.balance) or 0, currency)))
     end
 
     local reference = ('%s:%d:%d'):format(tostring(src), os.time(), GetGameTimer())
@@ -69,11 +94,14 @@ local function Run(src, args, operation)
         idempotencyKey = 'admin-money:' .. operation .. ':' .. reference
     }
     -- No actorSource: Core then treats the call as the service principal feather-admin.
-    local context = { correlationId = 'admin-money:' .. reference, actorCharacterId = characterId }
+    -- The actor in the journal is the staff member's character (none for the console).
+    local staff = src ~= 0 and exports['feather-core']:GetSessionContext(src) or nil
+    local context = { correlationId = 'admin-money:' .. reference,
+        actorCharacterId = type(staff) == 'table' and staff.ok and staff.value.characterId or nil }
     local result = operation == 'issue' and exports['feather-economy']:Issue(request, context)
         or exports['feather-economy']:Destroy(request, context)
 
-    local subject = { characterId = characterId, name = GetPlayerName(target) }
+    local subject = { characterId = characterId, name = target.name }
     local summary = ('%s %s wallet=%s'):format(operation, Format(minor, currency), wallet.accountId)
     if type(result) ~= 'table' or not result.ok then
         local code = type(result) == 'table' and result.code or 'invalid_result'
@@ -85,11 +113,11 @@ local function Run(src, args, operation)
 
     local after = exports['feather-economy']:GetAccount({ accountId = wallet.accountId })
     local balance = type(after) == 'table' and after.ok and Format(after.value.balance, currency) or '?'
-    Reply(src, ('%s %s %s player %d. New balance: %s.'):format(
+    Reply(src, ('%s %s %s %s. New balance: %s.'):format(
         operation == 'issue' and 'Gave' or 'Took', Format(minor, currency),
-        operation == 'issue' and 'to' or 'from', target, balance))
-    if target ~= src then
-        FeatherAdmin.Notify(target, ('%s %s %s your wallet.'):format(
+        operation == 'issue' and 'to' or 'from', target.name, balance))
+    if target.source and target.source ~= src then
+        FeatherAdmin.Notify(target.source, ('%s %s %s your wallet.'):format(
             operation == 'issue' and 'Staff added' or 'Staff removed', Format(minor, currency),
             operation == 'issue' and 'to' or 'from'), 5000)
     end
