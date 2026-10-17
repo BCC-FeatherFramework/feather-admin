@@ -82,5 +82,13 @@ Config.servicePolicy = {
             ['jobs.definition.manage']=true,
             ['jobs.assignment.manage']=true
         }
+    },
+    ['feather-licenses'] = {
+        -- Licensing office: its licence kinds, issuing, renewing and revoking.
+        ['bcc-documents'] = {
+            ['licenses.definition.manage']=true,
+            ['licenses.issue']=true,
+            ['licenses.revoke']=true
+        }
     }
 }
