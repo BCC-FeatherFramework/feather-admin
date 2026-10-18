@@ -1,6 +1,12 @@
 -- Server-only policy grants. No wildcards, staff-role fallback, or client actors.
 -- The broker caller authenticates the delegated subject.resource principal.
 Config.servicePolicy = {
+    -- Explicit Law console setup through the Justice broker. No player grants.
+    ['feather-justice'] = {
+        ['bcc-law'] = {
+            ['justice.definition.manage']=true
+        }
+    },
     ['feather-organizations'] = {
         ['feather-shops'] = {
             ['organizations.organization.create']=true,
