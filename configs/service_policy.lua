@@ -67,6 +67,11 @@ Config.servicePolicy = {
             ['contracts.obligation.issue']=true,
             ['contracts.obligation.cancel']=true,
             ['contracts.obligation.default']=true
+        },
+        -- Loan installments, cancelled when a disbursement fails after they were opened.
+        ['bcc-banks'] = {
+            ['contracts.obligation.issue']=true,
+            ['contracts.obligation.cancel']=true
         }
     },
     ['feather-property'] = {
