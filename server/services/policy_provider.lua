@@ -27,6 +27,36 @@ local function EvaluateService(action,context)
     return Decision(true,'allowed','The configured service action is permitted.')
 end
 
+-- Narrow staging adapter. The broker/caller is authenticated by Core; it may
+-- delegate only bcc-law. Existing owner entitlement is checked each time, with
+-- session fences. It does not register or grant Authority capabilities.
+local function EvaluateLawAcceptance(action, context)
+    local policy=Config.lawAcceptancePolicy
+    if type(policy)~='table' or policy.enabled~=true or type(policy.actions)~='table'
+        or policy.actions[action]~=true then return nil end
+    if type(Config.permissions[policy.requiredAdminAction])~='string'
+        or Config.permissions[policy.requiredAdminAction]~='owner' then
+        return Decision(false,'invalid_law_policy','Law acceptance requires an existing owner-only gate.')
+    end
+    if type(context.source)~='number' or context.source<=0 or context.system==true
+        or type(context.characterId)~='string' or type(context.sessionId)~='string'
+        or (context.caller~='bcc-law' and context.caller~='feather-justice')
+        or type(context.subject)~='table' or context.subject.resource~='bcc-law' then
+        return Decision(false,'invalid_law_context','Current Law/Justice player context is required.')
+    end
+    local function Current()
+        local called,value=pcall(function()
+            return exports['feather-core']:IsSessionCurrent(context.source,context.sessionId,context.characterId)
+        end)
+        return called and value==true
+    end
+    if not Current() then return Decision(false,'character_required','The character session changed.') end
+    local allowed=FeatherAdmin.CanUse(context.source,policy.requiredAdminAction)
+    if not Current() then return Decision(false,'character_required','The character session changed.') end
+    if not allowed then return Decision(false,'forbidden','Existing staff owner entitlement is required for Law acceptance.') end
+    return Decision(true,'allowed','The explicit owner-only Law acceptance action is permitted.')
+end
+
 local function Evaluate(action, context)
     if type(action) ~= 'string' or type(context) ~= 'table' then
         return Decision(false, 'invalid_input', 'Policy action and context are required.')
@@ -35,6 +65,8 @@ local function Evaluate(action, context)
         return Decision(false, 'action_disabled', 'That action is disabled.')
     end
     if context.source==0 then return EvaluateService(action,context) end
+    local lawDecision=EvaluateLawAcceptance(action,context)
+    if lawDecision then return lawDecision end
 
     if type(Config.permissions[action]) ~= 'string' then
         return Decision(false, 'unknown_action', 'That action has no configured policy.')

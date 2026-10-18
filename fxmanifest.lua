@@ -56,6 +56,7 @@ client_scripts {
 server_scripts {
     '@feather-mysql/lib/DB.lua',
     'configs/service_policy.lua',
+    'configs/law_acceptance_policy.lua',
     'configs/audit.lua',
     'server/core/init.lua',
     'server/core/locale.lua',
