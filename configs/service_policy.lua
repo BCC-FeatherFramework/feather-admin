@@ -82,6 +82,10 @@ Config.servicePolicy = {
         ['bcc-banks'] = {
             ['contracts.obligation.issue']=true,
             ['contracts.obligation.cancel']=true
+        },
+        ['feather-justice'] = {
+            ['contracts.obligation.issue']=true,
+            ['contracts.obligation.cancel']=true
         }
     },
     ['feather-property'] = {

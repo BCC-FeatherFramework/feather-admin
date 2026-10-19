@@ -51,6 +51,19 @@ local function EvaluateLawAcceptance(action, context)
         return called and value==true
     end
     if not Current() then return Decision(false,'character_required','The character session changed.') end
+    if policy.mode=='qualified' then
+        if action=='justice.audit.view' and not FeatherAdmin.CanUse(context.source,'staff.admin.audit.search') then
+            return Decision(false,'forbidden','Protected legal audit requires administrator audit authority.')
+        end
+        local called,result=pcall(function() return exports['bcc-law']:EvaluateActionPolicy(action,context) end)
+        if not Current() then return Decision(false,'character_required','The character session changed.') end
+        if not called or type(result)~='table' or not result.ok or type(result.value)~='table'
+            or type(result.value.allowed)~='boolean' then
+            return Decision(false,'law_policy_unavailable','Qualified Law policy is unavailable.')
+        end
+        return Decision(result.value.allowed,result.value.code or 'qualification_required','Qualified Law action policy evaluated.')
+    end
+    if policy.mode~=nil and policy.mode~='staff' then return Decision(false,'invalid_law_policy','Unknown Law policy mode.') end
     local allowed=FeatherAdmin.CanUse(context.source,policy.requiredAdminAction)
     if not Current() then return Decision(false,'character_required','The character session changed.') end
     if not allowed then return Decision(false,'forbidden','Existing staff owner entitlement is required for Law acceptance.') end
