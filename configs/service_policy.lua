@@ -4,7 +4,11 @@ Config.servicePolicy = {
     -- Explicit Law console setup through the Justice broker. No player grants.
     ['feather-justice'] = {
         ['bcc-law'] = {
-            ['justice.definition.manage']=true
+            ['justice.definition.manage']=true,
+            -- Justice 0.2.0 service mode: legal-status reads for jail placement/
+            -- reconnect and community-service unit reports, no player present.
+            ['justice.status.view']=true,
+            ['justice.sentence.progress']=true
         }
     },
     ['feather-organizations'] = {
