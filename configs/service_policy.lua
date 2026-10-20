@@ -4,6 +4,9 @@ Config.servicePolicy = {
     -- Explicit Law console setup through the Justice broker. No player grants.
     ['feather-justice'] = {
         ['bcc-law'] = {
+            -- Console setup (LawSetupJurisdictions, LawSetupStatutes) reads and
+            -- registers jurisdictions and statutes without a player.
+            ['justice.definition.view']=true,
             ['justice.definition.manage']=true,
             -- Justice 0.3.0 service mode (no player): custody status for jail
             -- placement/reconnect, one defendant's active sentences, and
