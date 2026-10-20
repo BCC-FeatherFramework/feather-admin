@@ -5,10 +5,12 @@ Config.servicePolicy = {
     ['feather-justice'] = {
         ['bcc-law'] = {
             ['justice.definition.manage']=true,
-            -- Justice 0.2.0 service mode: legal-status reads for jail placement/
-            -- reconnect and community-service unit reports, no player present.
-            ['justice.status.view']=true,
-            ['justice.sentence.progress']=true
+            -- Justice 0.3.0 service mode (no player): custody status for jail
+            -- placement/reconnect, one defendant's active sentences, and
+            -- completion of finished community service.
+            ['justice.custody.view']=true,
+            ['justice.sentence.view']=true,
+            ['justice.sentence.complete']=true
         }
     },
     ['feather-organizations'] = {
